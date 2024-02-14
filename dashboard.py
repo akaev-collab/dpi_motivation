@@ -41,7 +41,7 @@ if not check_password():
     st.stop()  # Do not continue if check_password is not True.
 
 
-file_name = "data_file/data_12.2023.xlsx"
+file_name = "data_file/data_02.2024.xlsx"
 
 @st.cache_data
 def load_data(file, sheet):
@@ -106,7 +106,7 @@ with tabel_1:
     #df_group_plan = df_group_plan[df_group_plan["Срок выдачи (план)"].dt.strftime('%Y') == "2023"]
     
     df_load_fact = df_load[(df_load["Срок выдачи (факт)"] >= start_date) & (df_load["Срок выдачи (факт)"] <= end_date)]
-
+    
     df_group_fact = df_load_fact.groupby([pd.Grouper(key = "Срок выдачи (факт)", freq="M")]).aggregate({"Кол-во комплектов (факт)":"sum"}).reset_index()
 
     df_group_fact["Кол-во комплектов (факт) YTD"] = df_group_fact["Кол-во комплектов (факт)"].cumsum()
@@ -118,32 +118,44 @@ with tabel_1:
 
     figure_line.add_trace(go.Scatter(x = df_group_plan["Срок выдачи (план)"], 
                                      y = df_group_plan["Кол-во комплектов (план)"], 
+                                     text = df_group_plan["Кол-во комплектов (план)"],
+                                     textposition = "top center",
+                                     textfont_color="grey",
                                      name = "План", 
-                                     mode = "lines + markers", 
+                                     mode = "lines + markers + text", 
                                      marker_color = "grey"))
     
     figure_line.add_trace(go.Scatter(x = df_group_plan["Срок выдачи (план)"], 
-                                     y = df_group_plan["Кол-во комплектов (план) YTD"], 
+                                     y = df_group_plan["Кол-во комплектов (план) YTD"],
+                                     text = df_group_plan["Кол-во комплектов (план) YTD"],
+                                     textposition = "top center",
+                                     textfont_color="grey", 
                                      name = "План YTD", 
-                                     mode = "lines + markers", 
+                                     mode = "lines + markers + text", 
                                      marker_color = "grey"))
 
     figure_line.add_trace(go.Scatter(x = df_group_fact["Срок выдачи (факт)"], 
-                                     y = df_group_fact["Кол-во комплектов (факт)"], 
+                                     y = df_group_fact["Кол-во комплектов (факт)"],
+                                     text = df_group_fact["Кол-во комплектов (факт)"],
+                                     textposition = "bottom center",
+                                     textfont_color="#007FFF", 
                                      name = "Факт", 
-                                     mode = "lines + markers", 
+                                     mode = "lines + markers + text", 
                                      marker_color = "#007FFF"))
     
     figure_line.add_trace(go.Scatter(x = df_group_fact["Срок выдачи (факт)"], 
-                                     y = df_group_fact["Кол-во комплектов (факт) YTD"], 
+                                     y = df_group_fact["Кол-во комплектов (факт) YTD"],
+                                     text = df_group_fact["Кол-во комплектов (факт) YTD"],
+                                     textposition = "bottom center",
+                                     textfont_color="#007FFF",  
                                      name = "Факт YTD", 
-                                     mode = "lines + markers", 
+                                     mode = "lines + markers + text", 
                                      marker_color = "#007FFF"))
 
 
     figure_line.update_layout(
                     
-                    width=1500,
+                    width=1200,
                     height=500,
                     xaxis_title='Месяц',
                     yaxis_title='Значение', 
@@ -153,11 +165,32 @@ with tabel_1:
     
     d = df_load.groupby(["Статус по выдаче"], as_index=False).aggregate({"Кол-во комплектов (факт)":"sum"})
     
-    fig_pie = px.pie(d, values='Кол-во комплектов (факт)', names='Статус по выдаче', hole=0.5,  
-             labels={'Category': 'Категория', 'Values': 'Значения'})
+    fig_pie = px.pie(d, values='Кол-во комплектов (факт)', 
+                     names='Статус по выдаче', hole=0.5, 
+                     labels={'Category': 'Категория', 'Values': 'Значения'},
+                     width = 500,
+                     height = 500
+                )
     
     st.markdown("## Статус по выдаче документации")
-    st.plotly_chart(figure_line)
+    
+    data = df_load_fact.groupby("Мастерская").aggregate({"Кол-во комплектов (факт)":"sum"}).reset_index()
+
+    col_box_1 = st.columns((7,3), gap = "medium")
+
+    with col_box_1[0]:
+        st.plotly_chart(figure_line)
+
+    with col_box_1[1]:
+        st.data_editor(data,
+                       
+    column_config={
+        "Кол-во комплектов (факт)": st.column_config.ProgressColumn(
+            "Выдано комплектов",
+            format="%f",
+            max_value = 1500),
+        },
+        hide_index=True,)
 
     df_group_fact["Месяц"] = df_group_fact["Срок выдачи (факт)"].dt.strftime('%B')
 
@@ -165,7 +198,7 @@ with tabel_1:
                 labels=dict(color='Кол-во комплектов (факт)'),
                 x=df_group_fact['Месяц'],
                 y=['Кол-во комплектов (факт)'],
-                width = 1700,
+                width = 1500,
                 height = 500,
                 color_continuous_scale=["#d7eefe","#a1d4ff","#6db8ff","#3a99ff", "#0079fa"])
     
@@ -179,7 +212,7 @@ with tabel_1:
 
     figure_status.update_layout(
                     
-                    width=1200,
+                    width=1000,
                     height=500,
                     xaxis_title='Месяц',
                     yaxis_title='Значение', 
@@ -189,12 +222,12 @@ with tabel_1:
 
     st.markdown("## Статус по выдаче комплектов с разрезе сроков")
 
-    col_1, col_2 = st.columns(2)
+    col_box = st.columns((6, 3), gap = "medium")
 
-    with col_1:
+    with col_box[0]:
         st.plotly_chart(figure_status)
 
-    with col_2:
+    with col_box[1]:
         st.plotly_chart(fig_pie)
 
     with st.expander("Исходные данные"):
@@ -225,8 +258,6 @@ with tabel_2:
                            y = ["Кол-во листов", "Кол-во листов по разделам"]
                            )
 
-
-
     figure_izm_status.update_layout(
                     
                     width=1500,
@@ -241,7 +272,7 @@ with tabel_2:
 
     figure_izm_heatmape = px.imshow([total_master_izm['% изм']],
                 labels=dict(color='% изм'),
-                x=df_group_fact['Месяц'],
+                x=total_master_izm['Месяц'],
                 y=['% изм'],
                 width = 1700,
                 height = 300,

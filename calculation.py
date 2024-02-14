@@ -46,7 +46,7 @@ def load_data(file_name, sheet_name):
     return data
 
 
-file_name = "data_file/data_12.2023.xlsx"
+file_name = "data_file/data_02.2024.xlsx"
 df_load = load_data(file_name, "P_RD")
 df_izm = load_data(file_name, "IZM")
 df_productivity = load_data(file_name, "Productivity")
@@ -185,7 +185,7 @@ def setting_set(number_of_periods):
             textfont=dict(size=16)))
         
         waterfall_salary.update_layout(
-            width=1000,
+            width=700,
             height=700,
             showlegend = True)
         
